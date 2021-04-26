@@ -1,0 +1,9 @@
+variable "name" {}
+variable "env" {}
+variable "ecs_cluter_name" {}
+variable "ecs_cluster_service_name" {}
+variable "alb_target_group_app_name" {}
+variable "alb_target_group_app2_name" {}
+variable "alb_listener_front_end_arn" {}
+variable "deployment_config_name" {}
+variable "termination_wait_time_in_minutes" {}

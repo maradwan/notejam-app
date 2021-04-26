@@ -1,0 +1,10 @@
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: $taskDefinitionArn
+        LoadBalancerInfo:
+          ContainerName: $ContainerName
+          ContainerPort: $ContainerPort
+        PlatformVersion: "LATEST"

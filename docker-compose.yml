@@ -1,0 +1,25 @@
+version: '2.1'
+services:
+
+  app:
+    restart: always
+    build: app/.
+    links:
+      - db
+    depends_on:
+      - db
+    environment:
+      - ENVIRONMENT=development
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_URL=db
+    ports:
+      - "5000:5000"
+  db:
+    image: mysql:5.6
+    restart: always
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql
+    environment:
+       MYSQL_DATABASE: "notejam"
+       MYSQL_ROOT_PASSWORD: password

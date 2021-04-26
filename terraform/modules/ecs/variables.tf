@@ -1,0 +1,16 @@
+variable "name" {}
+variable "subnet_private_id" {}
+variable "env" {}
+variable "app_env" {}
+variable "app_image" {}
+variable "aws_region" {}
+variable "app_port" {}
+variable "fargate_cpu" {}
+variable "fargate_memory" {}
+variable "ecs_task_execution_role" {}
+variable "alb_target_group" {}
+variable "app_count" {}
+variable "security_group_ecs_tasks_id" {}
+variable "db_user" {}
+variable "db_password" {}
+variable "db_url" {}
