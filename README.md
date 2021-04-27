@@ -1,5 +1,5 @@
 *****************************************************************************
-AWS ECS Fargate, Codecommit, CodeDeploy, CodePipeline and Terraform  
+AWS ECS Fargate, CodeCommit, CodeDeploy, CodePipeline and Terraform  
 *****************************************************************************
 
 ## Requirements
@@ -44,7 +44,7 @@ Clone the project
 		$ cd YOUR_PROJECT_DIR
 		$ git clone ssh://git-codecommit.eu-west-1.amazonaws.com/v1/repos/notejam
 		$ cd notejam	
-		$ cp -r app/* .
+		$ cp -r ../app/* .
 		$ git add . && git commit -m "Adding the project" && git push
 		
 
