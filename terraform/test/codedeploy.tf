@@ -1,6 +1,6 @@
 module "codedeploy" {
   source                           = "../modules/codedeploy"
-  name                             = var.app_name
+  name                             = "${var.app_name}-${formatdate("YYYYMMDDhhmmss", timestamp())}"
   env                              = var.env
   deployment_config_name           = var.codedeploy_deployment_config_name
   termination_wait_time_in_minutes = var.codedeploy_termination_wait_time_in_minutes
