@@ -1,5 +1,5 @@
 module "roles" {
   source = "../modules/roles"
-  name   = "${var.app_name}-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  name   = var.app_name
   env    = var.env
 }
