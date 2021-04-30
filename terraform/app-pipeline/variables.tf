@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "eu-west-1"
 }
 
+variable "aws_backup_region" {
+  description = "Source repo name"
+  type        = string
+  default     = "us-east-2"
+}
+
 variable "app_name" {
   description = "Source repo name"
   type        = string

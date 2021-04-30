@@ -126,7 +126,8 @@ resource "aws_iam_policy" "codebuild_policy" {
         "s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_s3_bucket.artifact_bucket.arn}/*"
+      "Resource": ["${aws_s3_bucket.artifact_bucket.arn}/*",
+                  "${aws_s3_bucket.corss_artifact_bucket.arn}/*"]
     },
     {
       "Action": [
@@ -189,7 +190,8 @@ resource "aws_iam_policy" "codepipeline_policy" {
         "s3:GetBucketVersioning"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_s3_bucket.artifact_bucket.arn}/*"
+      "Resource": ["${aws_s3_bucket.artifact_bucket.arn}/*",
+                  "${aws_s3_bucket.corss_artifact_bucket.arn}/*"]
     },
     {
       "Action" : [
@@ -244,6 +246,11 @@ resource "aws_iam_role_policy_attachment" "codepipeline-attach" {
 resource "aws_s3_bucket" "artifact_bucket" {
 }
 
+resource "aws_s3_bucket" "corss_artifact_bucket" {
+  provider = aws.aws_backup_region
+}
+
+
 # Codebuild project
 
 resource "aws_codebuild_project" "codebuild" {
@@ -278,6 +285,7 @@ resource "aws_codebuild_project" "codebuild" {
   source {
     type      = "CODEPIPELINE"
     buildspec = <<BUILDSPEC
+
 version: 0.2
 runtime-versions:
   docker: 18
@@ -305,6 +313,10 @@ phases:
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - export taskDefinitionArn="arn:aws:ecs:${var.aws_backup_region}:$AWS_ACCOUNT_ID:task-definition/${var.app_name}-test-app-task"
+      - export ContainerName=$(aws --region ${var.aws_backup_region} ecs describe-task-definition --task-definition ${var.app_name}-test-app-task | jq '.taskDefinition.containerDefinitions[0].name')
+      - export ContainerPort=$(aws --region ${var.aws_backup_region} ecs describe-task-definition --task-definition ${var.app_name}-test-app-task | jq '.taskDefinition.containerDefinitions[0].portMappings[0].containerPort') 
+      - envsubst < appspec_template.yaml > appspec-${var.aws_backup_region}-test.yaml
       - export taskDefinitionArn="arn:aws:ecs:$AWS_DEFAULT_REGION:$AWS_ACCOUNT_ID:task-definition/${var.app_name}-test-app-task"
       - export ContainerName=$(aws ecs describe-task-definition --task-definition ${var.app_name}-test-app-task | jq '.taskDefinition.containerDefinitions[0].name')
       - export ContainerPort=$(aws ecs describe-task-definition --task-definition ${var.app_name}-test-app-task | jq '.taskDefinition.containerDefinitions[0].portMappings[0].containerPort') 
@@ -322,6 +334,7 @@ phases:
       - aws ecs describe-task-definition --task-definition ${var.app_name}-test-app-task | jq 'del(.taskDefinition.taskDefinitionArn)' | jq '.taskDefinition' | jq 'del(.revision)' | jq 'del(.requiresAttributes)' | jq '.containerDefinitions[0].image = ('\"$REPOSITORY_URI:$IMAGE_TAG\"')' > taskdef-test.json
       - aws ecs describe-task-definition --task-definition ${var.app_name}-dev-app-task | jq 'del(.taskDefinition.taskDefinitionArn)' | jq '.taskDefinition' | jq 'del(.revision)' | jq 'del(.requiresAttributes)' | jq '.containerDefinitions[0].image = ('\"$REPOSITORY_URI:$IMAGE_TAG\"')' > taskdef-dev.json
       - aws ecs describe-task-definition --task-definition ${var.app_name}-prod-app-task | jq 'del(.taskDefinition.taskDefinitionArn)' | jq '.taskDefinition' | jq 'del(.revision)' | jq 'del(.requiresAttributes)' | jq '.containerDefinitions[0].image = ('\"$REPOSITORY_URI:$IMAGE_TAG\"')' > taskdef-prod.json
+      - aws --region ${var.aws_backup_region} ecs describe-task-definition --task-definition ${var.app_name}-test-app-task | jq 'del(.taskDefinition.taskDefinitionArn)' | jq '.taskDefinition' | jq 'del(.revision)' | jq 'del(.requiresAttributes)' | jq '.containerDefinitions[0].image = ('\"$REPOSITORY_URI:$IMAGE_TAG\"')' > taskdef-${var.aws_backup_region}-test.json
 
 artifacts:
     files: 
@@ -331,6 +344,8 @@ artifacts:
       - taskdef-test.json
       - taskdef-dev.json
       - taskdef-prod.json
+      - appspec-${var.aws_backup_region}-test.yaml
+      - taskdef-${var.aws_backup_region}-test.json
 
 BUILDSPEC
   }
@@ -344,10 +359,19 @@ resource "aws_codepipeline" "pipeline" {
   ]
   name     = "${var.source_repo_name}-${var.source_repo_branch}-Pipeline"
   role_arn = aws_iam_role.codepipeline_role.arn
+
   artifact_store {
     location = aws_s3_bucket.artifact_bucket.bucket
+    region   = var.aws_region
     type     = "S3"
   }
+
+  artifact_store {
+    location = aws_s3_bucket.corss_artifact_bucket.bucket
+    region   = var.aws_backup_region
+    type     = "S3"
+  }
+
 
   stage {
     name = "Source"
@@ -411,7 +435,35 @@ resource "aws_codepipeline" "pipeline" {
       run_order        = 1
       version          = "1"
     }
+
+
+
+    action {
+      category = "Deploy"
+      configuration = {
+        "AppSpecTemplateArtifact"        = "BuildOutput"
+        "AppSpecTemplatePath"            = "appspec-${var.aws_backup_region}-test.yaml"
+        "ApplicationName"                = "notejam-${var.aws_backup_region}-test"
+        "DeploymentGroupName"            = "notejam-${var.aws_backup_region}-test"
+        "TaskDefinitionTemplateArtifact" = "BuildOutput"
+        "TaskDefinitionTemplatePath"     = "taskdef-${var.aws_backup_region}-test.json"
+      }
+      input_artifacts = [
+        "BuildOutput",
+      ]
+      name             = "Deploy-US"
+      output_artifacts = []
+      owner            = "AWS"
+      provider         = "CodeDeployToECS"
+      region           = var.aws_backup_region
+      run_order        = 1
+      version          = "1"
+    }
+
+
   }
+
+
 
   stage {
     name = "Deploy-Development"
