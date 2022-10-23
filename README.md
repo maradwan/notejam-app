@@ -19,12 +19,6 @@ Clone the project
 		$ cd YOUR_PROJECT_DIR/terraform/test
 		$ terraform init
 		$ terraform apply -auto-approve
-
-* To build testing environment in backup region 
-
-		$ cd YOUR_PROJECT_DIR/terraform/test-us
-		$ terraform init
-		$ terraform apply -auto-approve  
 		
 * To build development environment
 
@@ -75,4 +69,3 @@ Deployment Strategy:
 If you would like to deploy to multi region , copy the environment dev,test and prod and change the region name from variables.tf also you need to add a stage in app-pipeline as I did for test-us. 
 
 * To add monitoring and logs we need to create elasticsearch subscription filter to cloudwatch <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_ES_Stream.html>
-

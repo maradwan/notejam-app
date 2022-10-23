@@ -1,6 +1,6 @@
 
 resource "aws_appautoscaling_target" "target" {
-  service_namespace = "ecs"
+  service_namespace  = "ecs"
   resource_id        = "service/${var.ecs_cluter_name}/${var.ecs_cluster_service_name}"
   scalable_dimension = "ecs:service:DesiredCount"
   min_capacity       = var.min_capacity
@@ -9,8 +9,8 @@ resource "aws_appautoscaling_target" "target" {
 
 # Automatically scale capacity up by one
 resource "aws_appautoscaling_policy" "up" {
-  name              = "${var.name}-${var.env}-scale-up"
-  service_namespace = "ecs"
+  name               = "${var.name}-${var.env}-scale-up"
+  service_namespace  = "ecs"
   resource_id        = "service/${var.ecs_cluter_name}/${var.ecs_cluster_service_name}"
   scalable_dimension = "ecs:service:DesiredCount"
 
@@ -30,8 +30,8 @@ resource "aws_appautoscaling_policy" "up" {
 
 # Automatically scale capacity down by one
 resource "aws_appautoscaling_policy" "down" {
-  name              = "${var.name}-${var.env}-scale-down"
-  service_namespace = "ecs"
+  name               = "${var.name}-${var.env}-scale-down"
+  service_namespace  = "ecs"
   resource_id        = "service/${var.ecs_cluter_name}/${var.ecs_cluster_service_name}"
   scalable_dimension = "ecs:service:DesiredCount"
 

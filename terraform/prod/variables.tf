@@ -72,7 +72,7 @@ variable "codedeploy_termination_wait_time_in_minutes" {
 }
 
 variable "codedeploy_deployment_config_name" {
-  default = "CodeDeployDefault.ECSLinear10PercentEvery1Minutes"
+  default = "CodeDeployDefault.ECSAllAtOnce"
 }
 
 variable "auto_scaling_max_capacity" {
